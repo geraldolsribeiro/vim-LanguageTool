@@ -241,9 +241,12 @@ function languagetool#Check(line1, line2) "{{{1
   \ . (empty(s:languagetool_enable_rules) ?  '' : ' -e '.s:languagetool_enable_rules)
   \ . (empty(s:languagetool_disable_categories) ? '' : ' --disablecategories '.s:languagetool_disable_categories)
   \ . (empty(s:languagetool_enable_categories) ?  '' : ' --enablecategories '.s:languagetool_enable_categories)
-  \ . ' -l '    . s:languagetool_lang
-  \ . ' --api ' . l:tmpfilename
-  \ . ' 2> '    . l:tmperror
+  \ . ' -l '     . s:languagetool_lang
+  \ . ' ' . l:tmpfilename
+  \ . ' 2> '     . l:tmperror
+  \ . ' | tee /tmp/LanguageTool.txt' " GLSR: Saves the report to file.
+
+  " --api was deprecated 
 
   sil exe '%!' . l:languagetool_cmd
   call delete(l:tmpfilename)
@@ -263,6 +266,7 @@ function languagetool#Check(line1, line2) "{{{1
   " Loop on all errors in XML output of LanguageTool and
   " collect information about all errors in list s:errors
   let s:errors = []
+
   while search('^<error ', 'eW') > 0
     let l:l = getline('.')
     " The fromx and tox given by LanguageTool are not reliable.
@@ -290,6 +294,9 @@ function languagetool#Check(line1, line2) "{{{1
     " set up syntax highlighting in the buffer which shows all errors.
     %d
     call append(0, '# ' . l:languagetool_cmd)
+    " GLSR: Fallback
+    exe "r /tmp/LanguageTool.txt" 
+
     set bt=nofile
     setlocal nospell
     syn clear
