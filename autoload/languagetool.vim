@@ -227,6 +227,7 @@ function languagetool#Check(line1, line2) "{{{1
   " correct results.
   let l:tmpfilename = tempname()
   let l:tmperror    = tempname()
+  let l:fallback    = tempname()
 
   let l:range = a:line1 . ',' . a:line2
   silent exe l:range . 'w!' . l:tmpfilename
@@ -242,9 +243,10 @@ function languagetool#Check(line1, line2) "{{{1
   \ . (empty(s:languagetool_disable_categories) ? '' : ' --disablecategories '.s:languagetool_disable_categories)
   \ . (empty(s:languagetool_enable_categories) ?  '' : ' --enablecategories '.s:languagetool_enable_categories)
   \ . ' -l '     . s:languagetool_lang
+  \ . ' --mothertongue pt-BR '
   \ . ' ' . l:tmpfilename
   \ . ' 2> '     . l:tmperror
-  \ . ' | tee /tmp/LanguageTool.txt' " GLSR: Saves the report to file.
+  \ . ' | tee ' . l:fallback " GLSR: Saves the report to file.
 
   " --api was deprecated 
 
@@ -295,7 +297,9 @@ function languagetool#Check(line1, line2) "{{{1
     %d
     call append(0, '# ' . l:languagetool_cmd)
     " GLSR: Fallback
-    exe "r /tmp/LanguageTool.txt" 
+    call append(0, '# Line shift: ' . (a:line1 - 1))
+    exe 'r ' . l:fallback
+    call delete(l:fallback)
 
     set bt=nofile
     setlocal nospell
